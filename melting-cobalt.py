@@ -79,8 +79,8 @@ def write_results(OUTPUT_FILE, results, log):
 def ips_from_inputfile(INPUT_FILE):
     cobalt_ips = []
     ips_file = open(INPUT_FILE,'r')
-    for ip in ips_file.readlines():
-        match = dict()
+    for ip in ips_file:
+        match = {}
         try:
             socket.inet_aton(ip)
             match['ip'] = ip.rstrip()
@@ -92,7 +92,7 @@ def ips_from_inputfile(INPUT_FILE):
     return cobalt_ips
 
 def read_searches(SEARCH_YML):
-    searches = dict()
+    searches = {}
     with open(SEARCH_YML, 'r') as file:
         searches = yaml.full_load(file)
     return searches
@@ -101,28 +101,25 @@ def mine_cobalt(search, config, log):
     cobalt_ips = []
     if 'shodan' in search:
         for s in search['shodan']:
-            log.info("Gathering all IPs from Shodan using search: {}".format(s))
+            log.info(f"Gathering all IPs from Shodan using search: {s}")
             results = shodan.search(s, config['shodan_token'], log)
-            log.info("Identified {} matching instances".format(len(results)))
-            for ip in results:
-                cobalt_ips.append(ip)
+            log.info(f"Identified {len(results)} matching instances")
+            cobalt_ips.extend(iter(results))
     if 'securitytrails' in search:
         for s in search['securitytrails']:
-            log.info("Gathering all IPs from SecurityTrails using search: {}".format(s))
+            log.info(f"Gathering all IPs from SecurityTrails using search: {s}")
             results = securitytrails.search(s, config['securitytrails_token'], log)
-            log.info("Identified {} matching instances".format(len(results)))
-            for ip in results:
-                cobalt_ips.append(ip)
+            log.info(f"Identified {len(results)} matching instances")
+            cobalt_ips.extend(iter(results))
             # sleep 1 second to not hit securitytrails api rate limit
             time.sleep(1)
     if 'zoomeye' in search:
         for s in search['zoomeye']:
-            log.info("Gathering all IPs from Zoomeye using search: {}".format(s))
+            log.info(f"Gathering all IPs from Zoomeye using search: {s}")
             results = zoomeye.search(s, config['zoomeye_token'], log)
-            log.info("Identified {} matching instances".format(len(results)))
-            for ip in results:
-                cobalt_ips.append(ip)
-    log.info("Cobalt Strike Team Servers found: {}".format(len(cobalt_ips)))
+            log.info(f"Identified {len(results)} matching instances")
+            cobalt_ips.extend(iter(results))
+    log.info(f"Cobalt Strike Team Servers found: {len(cobalt_ips)}")
     return cobalt_ips
 
 
@@ -154,7 +151,7 @@ if __name__ == "__main__":
     config = parser.load_conf(configpath)
 
     log = logger.setup_logging(config['log_path'], config['log_level'])
-    log.info("INIT - melting-cobalt v" + str(VERSION))
+    log.info(f"INIT - melting-cobalt v{str(VERSION)}")
 
     if ARG_VERSION:
         log.info("Version: {0}".format(VERSION))
@@ -172,13 +169,12 @@ if __name__ == "__main__":
         cobalt_ips = mine_cobalt(searches, config, log)
     else:
         abs_path = os.path.abspath(INPUT_PATH)
-        log.info("Reading from input file: {}".format(abs_path))
+        log.info(f"Reading from input file: {abs_path}")
         cobalt_ips = ips_from_inputfile(abs_path)
         log.info("Scanning for {0} ips from file".format(len(cobalt_ips)))
 
     NSE_SCRIPT_PATH = os.path.abspath(NSE_SCRIPT_PATH)
-    results = nmap.scan(cobalt_ips, NSE_SCRIPT_PATH, NMAP_PATH, log)
-    if results:
+    if results := nmap.scan(cobalt_ips, NSE_SCRIPT_PATH, NMAP_PATH, log):
         write_results(config['output'], results, log)
     else:
         log.debug("Returned no results, you might not be able to reach the server or they are down!")

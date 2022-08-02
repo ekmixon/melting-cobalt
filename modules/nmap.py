@@ -9,10 +9,7 @@ def parse_c2(c2s):
     c2s = c2s.split(",")
     # grab pairwise matches eg. (1,2), (3,4) to contruct domain,
     pairswise = zip(c2s[::2], c2s[1::2])
-    parsed_c2s = []
-    for pair in pairswise:
-        parsed_c2s.append(''.join(pair))
-    return parsed_c2s
+    return [''.join(pair) for pair in pairswise]
 
 def check(log):
 # only support nix*  at the moment
@@ -29,20 +26,20 @@ def check(log):
 def scan(open_instances, NSE_SCRIPT_PATH, NMAP_PATH, log):
     nmap_results = []
     for open_instance in open_instances:
-        log.info("Reducing beacon from: {} on ports: {}".format(open_instance['ip'],open_instance['port']))
+        log.info(
+            f"Reducing beacon from: {open_instance['ip']} on ports: {open_instance['port']}"
+        )
+
         if open_instance['port'] ==  '':
             cmd = [NMAP_PATH, open_instance['ip'], '--script', NSE_SCRIPT_PATH,'-vv','-d', '-n', '-F', '-T5', '-oX', '-']
-            log.debug("Scanning with nmap: {}".format(' '.join(cmd)))
-            result = subprocess.run(cmd, capture_output=True, text=True)
-
         else:
             cmd = [NMAP_PATH, open_instance['ip'], '-p', str(open_instance['port']), '--script', NSE_SCRIPT_PATH,'-vv','-d', '-n', '-T5', '-oX', '-']
-            log.debug("Scanning with nmap: {}".format(' '.join(cmd)))
-            result = subprocess.run(cmd, capture_output=True, text=True)
-        json_result = dict()
+        log.debug(f"Scanning with nmap: {' '.join(cmd)}")
+        result = subprocess.run(cmd, capture_output=True, text=True)
+
+        json_result = {}
         json_result = xmltodict.parse(result.stdout)
-        parsed_result = parse(json_result, log)
-        if parsed_result:
+        if parsed_result := parse(json_result, log):
             nmap_results.append(parsed_result)
     return nmap_results
 

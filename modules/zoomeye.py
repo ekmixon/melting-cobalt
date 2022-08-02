@@ -17,17 +17,15 @@ def search(search, API_KEY, log):
 
         # processing page 1
         for r in results:
-            open_instance = dict()
             log.debug("Found matching {0}:{1}".format(r['ip'],r['portinfo']['port']))
-            open_instance ['ip'] = r['ip']
-            open_instance['port'] = r['portinfo']['port']
+            open_instance = {'ip': r['ip'], 'port': r['portinfo']['port']}
             if 'domain' in r:
                 open_instance['domains'] = r['domain']
             else:
                 open_instance['domains'] = ''
                 open_instance['hostnames'] = r['portinfo']['hostname']
                 open_instance['timestamp'] = r['timestamp']
-                
+
                 # need parser for ssl cert
                 #if 'ssl' in r:
                     #open_instance['ssl'] = r['ssl']['cert']['subject']
@@ -39,7 +37,7 @@ def search(search, API_KEY, log):
                 log.info("Processing page: {0} out of {1}".format(page_number,total_pages))
                 results = api.dork_search(search, page=page_number)
                 for r in results:
-                    open_instance = dict()
+                    open_instance = {}
                     log.debug("Found matching {0}:{1}".format(r['ip'],r['portinfo']['port']))
                     open_instance ['ip'] = r['ip']
                     open_instance['port'] = r['portinfo']['port']
@@ -49,15 +47,11 @@ def search(search, API_KEY, log):
                         open_instance['domains'] = ''
                         open_instance['hostnames'] = r['portinfo']['hostname']
                         open_instance['timestamp'] = r['timestamp']
-                    # need parser for ssl cert
-                    #if 'ssl' in r:
-                        #open_instance['ssl'] = r['ssl']['cert']['subject']
-
                     open_instances.append(open_instance)
             # avoiding timeout and rejected request, need to sleep        
             time.sleep(5)
 
 
     except Exception as e:
-        log.info('ZoomEye search error: {}'.format(e))
+        log.info(f'ZoomEye search error: {e}')
     return open_instances

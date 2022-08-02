@@ -27,7 +27,7 @@ def search(search, API_KEY, log):
     # process page 1
     r_json = r.json()
     for result in r_json['records']:
-        open_instance = dict()
+        open_instance = {}
         if result['ports']['port']:
             log.debug("Found matching {0}:{1}".format(result['address'],",".join(str(i) for i in result['ports']['port'])))
             open_instance ['ip'] = result['address']
@@ -37,17 +37,16 @@ def search(search, API_KEY, log):
     # now paginate through the rest
     for page_number in range(2, total_pages):
         log.info("Processing page: {0} out of {1}".format(page_number,total_pages))
-        if 'value' in r_json['total']:
-            if (r_json['total']['value'] > 100):
-                r = requests.get('https://api.securitytrails.com/v1/query/scroll/' + r_json['id'], headers=headers)
-                r_json = r.json()
-                for result in r_json['records']:
-                    open_instance = dict()
-                    if result['ports']['port']:
-                        log.debug("Found matching {0}:{1}".format(result['address'],",".join(str(i) for i in result['ports']['port'])))
-                        open_instance ['ip'] = result['address']
-                        open_instance['port'] = ",".join(str(i) for i in result['ports']['port'])
-                        open_instances.append(open_instance)
+        if 'value' in r_json['total'] and (r_json['total']['value'] > 100):
+            r = requests.get('https://api.securitytrails.com/v1/query/scroll/' + r_json['id'], headers=headers)
+            r_json = r.json()
+            for result in r_json['records']:
+                open_instance = {}
+                if result['ports']['port']:
+                    log.debug("Found matching {0}:{1}".format(result['address'],",".join(str(i) for i in result['ports']['port'])))
+                    open_instance ['ip'] = result['address']
+                    open_instance['port'] = ",".join(str(i) for i in result['ports']['port'])
+                    open_instances.append(open_instance)
         # need to sleep to not hit api rate limits
         time.sleep(5)
 

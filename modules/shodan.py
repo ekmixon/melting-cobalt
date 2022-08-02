@@ -18,10 +18,8 @@ def search(search, API_KEY, log):
 
         # processing page 1
         for r in results['matches']:
-            open_instance = dict()
             log.debug("Found matching {0}:{1}".format(r['ip_str'],r['port']))
-            open_instance ['ip'] = r['ip_str']
-            open_instance['port'] = r['port']
+            open_instance = {'ip': r['ip_str'], 'port': r['port']}
             if 'domain' in r:
                 open_instance['domains'] = r['domain']
             else:
@@ -38,7 +36,7 @@ def search(search, API_KEY, log):
                 log.info("Processing page: {0} out of {1}".format(page_number,total_pages))
                 results = api.search(search, page=page_number)
                 for r in results['matches']:
-                    open_instance = dict()
+                    open_instance = {}
                     log.debug("Found matching {0}:{1}".format(r['ip_str'],r['port']))
                     open_instance ['ip'] = r['ip_str']
                     open_instance['port'] = r['port']
@@ -55,5 +53,5 @@ def search(search, API_KEY, log):
 
 
     except Exception as e:
-        log.info('Shodan search error: {}'.format(e))
+        log.info(f'Shodan search error: {e}')
     return open_instances
